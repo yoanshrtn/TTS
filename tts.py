@@ -1,3 +1,4 @@
+
 import streamlit as st
 import streamlit.components.v1 as components
 import random
@@ -185,7 +186,6 @@ if st.session_state.is_correct[idx] or st.session_state.is_revealed[idx]:
         st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
 
 # --- NAVIGASI DROPDOWN YANG SINKRON ---
-# Membandingkan pilihan dropdown (selected_q) dengan state saat ini
 selected_q = st.selectbox(
     "Pilih Daftar Soal:", 
     range(1, len(questions) + 1), 
@@ -210,21 +210,36 @@ for i in range(len(ans_lontong)):
         is_hint = st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]
         is_disabled = st.session_state.is_correct[idx] or st.session_state.is_revealed[idx] or is_hint
         
+        # Penambahan autocomplete="off" untuk mencegah munculnya history input dari browser
         st.text_input(
             label=f"hidden_{idx}_{i}",
             max_chars=1,
             key=f"box_{idx}_{i}",
-            disabled=is_disabled
+            disabled=is_disabled,
+            autocomplete="off" 
         )
 
 st.caption(f"*Jumlah kotak: {len(ans_lontong)} huruf*")
 
-# --- INJEKSI JAVASCRIPT EVENT DELEGATION (Otomatis fokus setiap pindah soal) ---
+# --- INJEKSI JAVASCRIPT ---
+# Memastikan event listener global dipasang agar selalu auto-focus saat pindah soal
+# Serta menambahkan setting atribut "autocomplete = off" secara paksa ke HTML
 js_code = """
 <script>
 const doc = window.parent.document;
 
-// Memastikan event listener global hanya dipasang satu kali
+// Paksa semua input kotak untuk matiin suggestion/autocomplete browser
+const disableAutocomplete = () => {
+    const allInputs = doc.querySelectorAll('div[data-testid="stTextInput"] input');
+    allInputs.forEach(input => {
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('spellcheck', 'false');
+    });
+};
+disableAutocomplete();
+// Panggil lagi kalau-kalau Streamlit render ulang elemennya
+setTimeout(disableAutocomplete, 500); 
+
 if (!doc.getElementById("tts-listener-installed")) {
     const marker = doc.createElement("div");
     marker.id = "tts-listener-installed";
@@ -261,7 +276,7 @@ if (!doc.getElementById("tts-listener-installed")) {
                     let prev_input = allInputs[index - 1];
                     if (prev_input && prev_input.disabled && index - 2 >= 0) {
                         allInputs[index - 2].focus();
-                        e.preventDefault(); // Mencegah karakter kotak sebelumnya langsung terhapus
+                        e.preventDefault(); 
                     } else if (prev_input && !prev_input.disabled) {
                         prev_input.focus();
                         e.preventDefault();
