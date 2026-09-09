@@ -1,4 +1,3 @@
-
 import streamlit as st
 import streamlit.components.v1 as components
 import random
@@ -110,11 +109,6 @@ for i, q in enumerate(questions):
             st.session_state[key] = ""
 
 # --- FUNGSI CALLBACKS ---
-def change_question():
-    st.session_state.current_idx = st.session_state.selectbox_idx - 1
-    st.session_state.error_msg = ""
-    st.session_state.warning_msg = ""
-
 def check_answer():
     idx = st.session_state.current_idx
     ans_lontong = questions[idx]['lontong'].upper()
@@ -155,7 +149,7 @@ def reveal_answer():
     idx = st.session_state.current_idx
     ans_lontong = questions[idx]['lontong'].upper()
     
-    # Isi semua kotak dengan jawaban benar & ubah status jadi REVEALED (bukan correct)
+    # Isi semua kotak dengan jawaban benar & ubah status jadi REVEALED
     for i in range(len(ans_lontong)):
         st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
     st.session_state.is_revealed[idx] = True
@@ -190,15 +184,21 @@ if st.session_state.is_correct[idx] or st.session_state.is_revealed[idx]:
     for i in range(len(ans_lontong)):
         st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
 
-# Navigasi Dropdown Soal
-st.selectbox(
+# --- NAVIGASI DROPDOWN YANG SINKRON ---
+# Membandingkan pilihan dropdown (selected_q) dengan state saat ini
+selected_q = st.selectbox(
     "Pilih Daftar Soal:", 
     range(1, len(questions) + 1), 
     index=idx, 
-    format_func=lambda x: f"Contoh Soal {x}" if x <= 2 else f"Soal Nomor {x-2}",
-    key="selectbox_idx",
-    on_change=change_question
+    format_func=lambda x: f"Contoh Soal {x}" if x <= 2 else f"Soal Nomor {x-2}"
 )
+
+# Jika ada perubahan dari dropdown manual, kita reroute
+if (selected_q - 1) != idx:
+    st.session_state.current_idx = selected_q - 1
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+    st.rerun()
 
 st.write(f"**Pertanyaan:** {q_data['q']}")
 
@@ -207,7 +207,6 @@ cols = st.columns(len(ans_lontong))
 
 for i in range(len(ans_lontong)):
     with cols[i]:
-        # Kunci kotak jika jawaban sudah benar, jawaban sudah di-reveal, ATAU ini kotak hint
         is_hint = st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]
         is_disabled = st.session_state.is_correct[idx] or st.session_state.is_revealed[idx] or is_hint
         
@@ -220,42 +219,58 @@ for i in range(len(ans_lontong)):
 
 st.caption(f"*Jumlah kotak: {len(ans_lontong)} huruf*")
 
-# --- INJEKSI JAVASCRIPT UNTUK AUTO-FOCUS (Ketik nyambung) ---
+# --- INJEKSI JAVASCRIPT EVENT DELEGATION (Otomatis fokus setiap pindah soal) ---
 js_code = """
 <script>
 const doc = window.parent.document;
-const inputs = doc.querySelectorAll('div[data-testid="stTextInput"] input');
 
-inputs.forEach((input, index) => {
-    if (!input.dataset.autofocusAttached) {
-        input.dataset.autofocusAttached = "true";
-        
-        // Ketik pindah ke kanan
-        input.addEventListener('input', function(e) {
-            if (this.value.length === 1 && index < inputs.length - 1) {
-                let next_input = inputs[index + 1];
-                // Loncati kotak kalau disable (misal kena hint)
-                if(next_input && next_input.disabled && index + 2 < inputs.length) {
-                    inputs[index + 2].focus();
+// Memastikan event listener global hanya dipasang satu kali
+if (!doc.getElementById("tts-listener-installed")) {
+    const marker = doc.createElement("div");
+    marker.id = "tts-listener-installed";
+    marker.style.display = "none";
+    doc.body.appendChild(marker);
+
+    // Event saat mengetik
+    doc.addEventListener('input', function(e) {
+        const isTextInput = e.target.closest('div[data-testid="stTextInput"]');
+        if (isTextInput && e.target.tagName === 'INPUT') {
+            const allInputs = Array.from(doc.querySelectorAll('div[data-testid="stTextInput"] input'));
+            const index = allInputs.indexOf(e.target);
+            
+            if (index > -1 && e.target.value.length === 1 && index < allInputs.length - 1) {
+                let next_input = allInputs[index + 1];
+                if (next_input && next_input.disabled && index + 2 < allInputs.length) {
+                    allInputs[index + 2].focus();
                 } else if (next_input && !next_input.disabled) {
                     next_input.focus();
                 }
             }
-        });
-        
-        // Hapus pindah ke kiri
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
-                let prev_input = inputs[index - 1];
-                if(prev_input && prev_input.disabled && index - 2 >= 0) {
-                     inputs[index - 2].focus();
-                } else if (prev_input && !prev_input.disabled) {
-                     prev_input.focus();
+        }
+    });
+
+    // Event saat menghapus (Backspace)
+    doc.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace') {
+            const isTextInput = e.target.closest('div[data-testid="stTextInput"]');
+            if (isTextInput && e.target.tagName === 'INPUT' && e.target.value.length === 0) {
+                const allInputs = Array.from(doc.querySelectorAll('div[data-testid="stTextInput"] input'));
+                const index = allInputs.indexOf(e.target);
+                
+                if (index > 0) {
+                    let prev_input = allInputs[index - 1];
+                    if (prev_input && prev_input.disabled && index - 2 >= 0) {
+                        allInputs[index - 2].focus();
+                        e.preventDefault(); // Mencegah karakter kotak sebelumnya langsung terhapus
+                    } else if (prev_input && !prev_input.disabled) {
+                        prev_input.focus();
+                        e.preventDefault();
+                    }
                 }
             }
-        });
-    }
-});
+        }
+    });
+}
 </script>
 """
 components.html(js_code, height=0)
