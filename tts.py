@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 import random
 
 # --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="TTS Alkitab Nyeleneh", page_icon="🧩", layout="centered")
+st.set_page_config(page_title="Teka-teki Alkitab", page_icon="🧩", layout="centered")
 
 # --- CUSTOM CSS UNTUK TAMPILAN ---
 st.markdown("""
@@ -308,9 +308,9 @@ if not (st.session_state.is_correct[idx] or st.session_state.is_revealed[idx]):
 
 # --- ALERT MESSAGE ---
 if st.session_state.is_correct[idx]:
-    st.success("BENAR! 🎉 (Teka-Teki Terjawab)")
+    st.success("BENAR! 🎉")
 elif st.session_state.is_revealed[idx]:
-    st.info("Kamu menyerah, jawaban telah ditampilkan. 🏳️")
+    st.info("Kamu menyerah, jawaban telah ditampilkan.")
     
 if st.session_state.error_msg:
     st.error(st.session_state.error_msg)
