@@ -1,442 +1,162 @@
+%%writefile app.py
 import streamlit as st
 import random
 
-# ============================================================
-# KONFIGURASI HALAMAN
-# ============================================================
+# Konfigurasi Halaman
+st.set_page_config(page_title="TTS Alkitab Cak Lontong", page_icon="📖", layout="centered")
 
-st.set_page_config(
-    page_title="TTS ala Cak Lontong",
-    page_icon="🧩",
-    layout="centered"
-)
-
-# ============================================================
-# DATA SOAL
-# ============================================================
-# "answer" = jawaban nyeleneh yang harus ditebak peserta
-#
-# "hint" = (posisi, huruf)
-# Posisi dimulai dari 0.
-#
-# Jawaban benar TIDAK disimpan lengkap di kode.
-# Hint sudah ditentukan berdasarkan perbandingan dengan
-# jawaban benar.
-# ============================================================
-
-contoh_soal = [
+# Data Soal
+questions = [
     {
-        "question": "Karena tidak mau pergi ke Niniwe, Nabi Yunus akhirnya ditelan oleh ikan...",
-        "answer": "hidup",
-        "hint": (1, "i")
+        "q": "Karena tidak mau pergi ke Niniwe, Nabi Yunus akhirnya ditelan oleh ikan...", 
+        "normal": "BESAR", "lontong": "HIDUP", 
+        "reason": "Kalau ikannya udah mati, dia ngambang doang di laut, mana bisa buka mulut buat nelen orang."
     },
     {
-        "question": "Saat dikejar pasukan Firaun, dengan tongkatnya Nabi Musa membelah laut...",
-        "answer": "dalam",
-        "hint": (3, "a")
+        "q": "Saat dikejar pasukan Firaun, dengan tongkatnya Nabi Musa membelah laut...", 
+        "normal": "MERAH", "lontong": "DALAM", 
+        "reason": "Justru karena lautnya dalam makanya harus dibelah biar bisa lewat. Kalau cetek tinggal nyeker aja."
+    },
+    {
+        "q": "Hukuman untuk Daniel karena tetap berdoa kepada Allah adalah dilempar ke dalam gua...", 
+        "normal": "SINGA", "lontong": "GELAP", 
+        "reason": "Gua zaman dulu ditutup batu atasnya, ya pasti gelap gulita. Kalau terang banyak lampu itu minimarket."
+    },
+    {
+        "q": "Simson akhirnya kehilangan semua kekuatannya setelah rambutnya di...", 
+        "normal": "POTONG", "lontong": "PENDEK", 
+        "reason": "Setelah dicukur ya rambutnya jadi pendek. Coba kalau potong ujungnya doang dikit, kekuatannya nggak hilang."
+    },
+    {
+        "q": "Karena badannya pendek, Zakheus memanjat pohon ara supaya bisa melihat...", 
+        "normal": "YESUS", "lontong": "JELAS", 
+        "reason": "Kalau lihat dari bawah ketutupan kepala orang, buram! Makanya manjat supaya bisa melihat dengan jelas."
+    },
+    {
+        "q": "Saat berjalan di atas air menuju Yesus lalu melihat tiupan angin sakal, Petrus menjadi...", 
+        "normal": "TAKUT", "lontong": "BASAH", 
+        "reason": "Karena mulai tenggelam ke dalam air, ya otomatis baju sampai sepatunya basah kuyup!"
+    },
+    {
+        "q": "Tindakan Yudas Iskariot rela menyerahkan Yesus kepada imam-imam kepala demi mendapatkan 30 keping...", 
+        "normal": "PERAK", "lontong": "SALAH", 
+        "reason": "Ya jelas tindakannya salah! Masa mengkhianati Guru sendiri cuma demi materi."
+    },
+    {
+        "q": "Meskipun diuji dengan kehilangan seluruh hartanya dan anak-anaknya meninggal, Ayub tetap...", 
+        "normal": "SETIA", "lontong": "HIDUP", 
+        "reason": "Yang mati anak dan ternaknya. Ayubnya sendiri kan saat itu masih hidup."
+    },
+    {
+        "q": "Esau rela menjual hak kesulungannya kepada Yakub hanya demi semangkuk sayur kacang...", 
+        "normal": "MERAH", "lontong": "PANAS", 
+        "reason": "Kuahnya pasti masih panas dan ngebul. Kalau udah dingin dari kemarin, Esau juga mikir dua kali."
+    },
+    {
+        "q": "Nabi Elia sendirian menantang 450 nabi palsu dewa Baal di atas Gunung...", 
+        "normal": "KARMEL", "lontong": "BERANI", 
+        "reason": "Satu lawan empat ratus lima puluh orang, ya jelas Elia itu berani! Kalau penakut mending ngumpet."
+    },
+    {
+        "q": "Sebelum merayakan Paskah, Yesus memberi teladan kerendahan hati dengan membasuh kaki...", 
+        "normal": "MURID", "lontong": "KOTOR", 
+        "reason": "Zaman dulu jalanan berdebu dan cuma pakai sandal, kakinya pasti kotor. Kalau bersih ngapain dibasuh lagi."
+    },
+    {
+        "q": "Martir pertama di gereja mula-mula yang mati syahid karena dilempari batu bertubi-tubi oleh orang Yahudi...", 
+        "normal": "STEFANUS", "lontong": "BERDARAH", 
+        "reason": "Dilempar batu sekepalan tangan beramai-ramai, ya pasti badannya berdarah semua."
+    },
+    {
+        "q": "Untuk bisa masuk ke tanah Kanaan, bangsa Israel yang dipimpin Yosua berjalan menyeberangi sungai...", 
+        "normal": "YORDAN", "lontong": "KERING", 
+        "reason": "Kalau airnya lagi deres mana berani bawa anak-anak nyeberang. Nunggu air berhenti dan tanahnya kering baru nyeberang!"
     }
 ]
 
-soal_utama = [
-    {
-        "question": "Hukuman untuk Daniel karena tetap berdoa kepada Allah adalah dilempar ke dalam gua...",
-        "answer": "gelap",
-        "hint": (2, "l")
-    },
-    {
-        "question": "Simson akhirnya kehilangan semua kekuatannya setelah rambutnya di...",
-        "answer": "pendek",
-        "hint": (3, "e")
-    },
-    {
-        "question": "Karena badannya pendek, Zakheus memanjat pohon ara supaya bisa melihat...",
-        "answer": "jelas",
-        "hint": (1, "e")
-    },
-    {
-        "question": "Saat berjalan di atas air menuju Yesus lalu melihat tiupan angin sakal, Petrus menjadi...",
-        "answer": "basah",
-        "hint": (1, "a")
-    },
-    {
-        "question": "Tindakan Yudas Iskariot rela menyerahkan Yesus kepada imam-imam kepala demi mendapatkan 30 keping...",
-        "answer": "salah",
-        "hint": (3, "a")
-    },
-    {
-        "question": "Meskipun diuji dengan kehilangan seluruh hartanya dan anak-anaknya meninggal, Ayub tetap...",
-        "answer": "hidup",
-        "hint": (3, "u")
-    },
-    {
-        "question": "Esau rela menjual hak kesulungannya kepada Yakub hanya demi semangkuk sayur kacang...",
-        "answer": "panas",
-        "hint": (3, "a")
-    },
-    {
-        "question": "Nabi Elia sendirian menantang 450 nabi palsu dewa Baal di atas Gunung...",
-        "answer": "berani",
-        "hint": (2, "r")
-    },
-    {
-        "question": "Sebelum merayakan Paskah, Yesus memberi teladan kerendahan hati dengan membasuh kaki...",
-        "answer": "kotor",
-        "hint": (1, "o")
-    },
-    {
-        "question": "Martir pertama di gereja mula-mula yang mati syahid karena dilempari batu bertubi-tubi oleh orang Yahudi...",
-        "answer": "berdarah",
-        "hint": (4, "a")
-    },
-    {
-        "question": "Untuk bisa masuk ke tanah Kanaan, bangsa Israel yang dipimpin Yosua berjalan menyeberangi sungai...",
-        "answer": "kering",
-        "hint": (2, "r")
-    }
-]
+# Inisialisasi State Session
+if 'current_idx' not in st.session_state:
+    st.session_state.current_idx = 0
+    st.session_state.show_hint = False
+    st.session_state.hint_index = -1
+    st.session_state.is_correct = False
 
-# ============================================================
-# FUNGSI MEMBUAT INPUT KOTAK HURUF
-# ============================================================
+def next_question():
+    st.session_state.current_idx += 1
+    st.session_state.show_hint = False
+    st.session_state.hint_index = -1
+    st.session_state.is_correct = False
 
-def buat_kotak_huruf(answer, question_id, hint_data=None):
-    """
-    Membuat kotak-kotak input sesuai jumlah huruf jawaban.
+def calculate_hint(normal, lontong):
+    # Cari huruf yang posisinya sama persis
+    matches = [i for i in range(len(lontong)) if i < len(normal) and normal[i] == lontong[i]]
+    if matches:
+        return matches[0] # Ambil match pertama
+    else:
+        # Jika tidak ada yang sama, random selain index 0
+        return random.randint(1, len(lontong) - 1) if len(lontong) > 1 else 0
 
-    answer:
-        Jawaban nyeleneh yang harus ditebak.
+st.title("🧩 TTS Alkitab Nyeleneh")
 
-    question_id:
-        ID unik soal agar key Streamlit tidak bentrok.
+if st.session_state.current_idx < len(questions):
+    q_data = questions[st.session_state.current_idx]
+    ans_lontong = q_data['lontong'].upper()
+    ans_normal = q_data['normal'].upper()
+    
+    # Header Contoh / Soal
+    if st.session_state.current_idx < 2:
+        st.subheader(f"💡 CONTOH SOAL {st.session_state.current_idx + 1}")
+        st.info("Pemanasan dulu! Gunakan logika yang di luar nalar.")
+    else:
+        st.subheader(f"🎯 SOAL NOMOR {st.session_state.current_idx - 1}")
+    
+    # Tampilkan Pertanyaan
+    st.write(f"**Pertanyaan:** {q_data['q']}")
+    
+    # Hitung Hint jika belum diset
+    if st.session_state.hint_index == -1:
+        st.session_state.hint_index = calculate_hint(ans_normal, ans_lontong)
+    
+    # Tampilan Kotak Huruf
+    boxes = []
+    for i in range(len(ans_lontong)):
+        if st.session_state.show_hint and i == st.session_state.hint_index:
+            boxes.append(f" **[ {ans_lontong[i]} ]** ")
+        else:
+            boxes.append(" [ _ ] ")
+            
+    st.markdown("### " + "".join(boxes))
+    st.caption(f"*Jumlah kotak: {len(ans_lontong)} huruf*")
+    
+    # Input Jawaban
+    user_input = st.text_input("Ketik jawabanmu di sini:", key=f"input_{st.session_state.current_idx}").upper()
+    
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        if st.button("Kunci Jawaban ✅"):
+            if user_input == ans_lontong:
+                st.session_state.is_correct = True
+            else:
+                st.error("Tetooot! ❌ Salah! Jangan pakai logika lurus, coba pakai logika Cak Lontong.")
+                
+    with col2:
+        if not st.session_state.is_correct:
+            if st.button("Minta Hint 💡"):
+                st.session_state.show_hint = True
+                st.rerun()
+                
+    # Jika Benar
+    if st.session_state.is_correct:
+        st.success("BENAR! 🎉")
+        st.warning(f"**Alasan Logis:** {q_data['reason']}")
+        if st.button("Lanjut Soal Berikutnya ➡️"):
+            next_question()
+            st.rerun()
 
-    hint_data:
-        Tuple (posisi, huruf) untuk hint.
-    """
-
-    letters = []
-
-    # Ambil hint
-    hint_position = None
-    hint_letter = None
-
-    if hint_data:
-        hint_position, hint_letter = hint_data
-
-    cols = st.columns(len(answer))
-
-    for i, col in enumerate(cols):
-
-        # Kalau posisi ini merupakan huruf hint
-        default_value = ""
-
-        if hint_position == i:
-            default_value = hint_letter.upper()
-
-        with col:
-            value = st.text_input(
-                label=f"Huruf {i+1}",
-                value=default_value,
-                max_chars=1,
-                key=f"{question_id}_letter_{i}",
-                label_visibility="collapsed",
-                placeholder="_"
-            ).strip().lower()
-
-        letters.append(value)
-
-    return "".join(letters)
-
-
-# ============================================================
-# SESSION STATE
-# ============================================================
-
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-
-if "example_index" not in st.session_state:
-    st.session_state.example_index = 0
-
-if "game_index" not in st.session_state:
-    st.session_state.game_index = 0
-
-if "example_correct" not in st.session_state:
-    st.session_state.example_correct = False
-
-if "game_correct" not in st.session_state:
-    st.session_state.game_correct = False
-
-if "example_hint" not in st.session_state:
-    st.session_state.example_hint = False
-
-if "game_hint" not in st.session_state:
-    st.session_state.game_hint = False
-
-
-# ============================================================
-# HALAMAN UTAMA
-# ============================================================
-
-if st.session_state.page == "home":
-
-    st.title("🧩 TTS Ala Cak Lontong")
-
-    st.write(
-        "Jawab pertanyaan dengan jawaban yang paling... "
-        "**tidak masuk akal tapi masuk akal.** 😭"
-    )
-
-    st.divider()
-
-    st.subheader("Cara Bermain")
-
-    st.write(
-        "Baca pertanyaannya, lalu isi kotak-kotak dengan jawaban "
-        "nyeleneh yang menurutmu paling cocok."
-    )
-
-    st.write(
-        "Kamu juga bisa menggunakan **Hint** apabila mengalami kebuntuan."
-    )
-
-    st.write(
-        "Tenang, dua soal pertama adalah soal contoh sebelum masuk "
-        "ke permainan utama."
-    )
-
-    st.divider()
-
-    if st.button(
-        "▶️ Mulai Permainan",
-        use_container_width=True
-    ):
-        st.session_state.page = "example"
-
-        # Reset
-        st.session_state.example_index = 0
-        st.session_state.example_correct = False
-        st.session_state.example_hint = False
-
+else:
+    st.success("🎊 Selamat! Kamu telah menyelesaikan semua pertanyaan.")
+    st.balloons()
+    if st.button("Main Lagi 🔄"):
+        st.session_state.current_idx = 0
         st.rerun()
-
-
-# ============================================================
-# SOAL CONTOH
-# ============================================================
-
-elif st.session_state.page == "example":
-
-    index = st.session_state.example_index
-    soal = contoh_soal[index]
-
-    st.caption(f"Contoh Soal {index + 1} dari {len(contoh_soal)}")
-
-    st.title("📝 Contoh Soal")
-
-    st.markdown(
-        f"### {soal['question']}"
-    )
-
-    st.write("")
-
-    # Status hint
-    hint_data = soal["hint"] if st.session_state.example_hint else None
-
-    # Kotak jawaban
-    jawaban_user = buat_kotak_huruf(
-        soal["answer"],
-        f"example_{index}",
-        hint_data
-    )
-
-    st.write("")
-
-    # Tombol cek
-    if st.button(
-        "✅ Cek Jawaban",
-        use_container_width=True
-    ):
-
-        if len(jawaban_user) != len(soal["answer"]):
-            st.warning("Lengkapi semua kotak terlebih dahulu.")
-
-        elif jawaban_user == soal["answer"]:
-            st.session_state.example_correct = True
-            st.success("🎉 BENAR! Jawabanmu tepat.")
-
-        else:
-            st.error("❌ SALAH! Coba pikirkan lagi...")
-
-    # Tombol hint
-    if not st.session_state.example_hint:
-
-        if st.button(
-            "💡 Hint",
-            use_container_width=True
-        ):
-            st.session_state.example_hint = True
-            st.rerun()
-
-    else:
-        st.info(
-            f"💡 Hint terbuka: huruf ke-{soal['hint'][0] + 1} "
-            f"adalah **{soal['hint'][1].upper()}**."
-        )
-
-    # Kalau benar
-    if st.session_state.example_correct:
-
-        st.divider()
-
-        if index + 1 < len(contoh_soal):
-
-            if st.button(
-                "➡️ Contoh Berikutnya",
-                use_container_width=True
-            ):
-                st.session_state.example_index += 1
-                st.session_state.example_correct = False
-                st.session_state.example_hint = False
-                st.rerun()
-
-        else:
-
-            st.success(
-                "Semua soal contoh selesai! Saatnya masuk ke permainan utama. 🔥"
-            )
-
-            if st.button(
-                "🎮 Mulai Permainan Utama",
-                use_container_width=True
-            ):
-                st.session_state.page = "game"
-                st.session_state.game_index = 0
-                st.session_state.game_correct = False
-                st.session_state.game_hint = False
-                st.rerun()
-
-
-# ============================================================
-# PERMAINAN UTAMA
-# ============================================================
-
-elif st.session_state.page == "game":
-
-    index = st.session_state.game_index
-    soal = soal_utama[index]
-
-    total_soal = len(soal_utama)
-
-    st.caption(
-        f"Soal {index + 1} dari {total_soal}"
-    )
-
-    st.title("🎮 Permainan Dimulai!")
-
-    # Progress bar
-    progress = (index) / total_soal
-    st.progress(progress)
-
-    st.markdown(
-        f"### {soal['question']}"
-    )
-
-    st.write("")
-
-    # Hint
-    hint_data = soal["hint"] if st.session_state.game_hint else None
-
-    # Kotak huruf
-    jawaban_user = buat_kotak_huruf(
-        soal["answer"],
-        f"game_{index}",
-        hint_data
-    )
-
-    st.write("")
-
-    # Tombol cek
-    if st.button(
-        "✅ Cek Jawaban",
-        use_container_width=True
-    ):
-
-        if len(jawaban_user) != len(soal["answer"]):
-
-            st.warning(
-                "⚠️ Semua kotak harus diisi terlebih dahulu."
-            )
-
-        elif jawaban_user == soal["answer"]:
-
-            st.session_state.game_correct = True
-
-            st.success(
-                "🎉 BENAR! Cak Lontong pasti bangga."
-            )
-
-        else:
-
-            st.error(
-                "❌ SALAH! Jawabanmu terlalu masuk akal mungkin... 😂"
-            )
-
-    # Tombol hint
-    if not st.session_state.game_hint:
-
-        if st.button(
-            "💡 Minta Hint",
-            use_container_width=True
-        ):
-
-            st.session_state.game_hint = True
-            st.rerun()
-
-    else:
-
-        st.info(
-            f"💡 Hint: huruf ke-{soal['hint'][0] + 1} "
-            f"adalah **{soal['hint'][1].upper()}**."
-        )
-
-    # Next question
-    if st.session_state.game_correct:
-
-        st.divider()
-
-        if index + 1 < total_soal:
-
-            if st.button(
-                "➡️ Soal Berikutnya",
-                use_container_width=True
-            ):
-
-                st.session_state.game_index += 1
-                st.session_state.game_correct = False
-                st.session_state.game_hint = False
-
-                st.rerun()
-
-        else:
-
-            st.balloons()
-
-            st.success(
-                "🏆 SELAMAT! Kamu berhasil menyelesaikan semua soal!"
-            )
-
-            if st.button(
-                "🔄 Main Lagi",
-                use_container_width=True
-            ):
-
-                st.session_state.page = "home"
-
-                st.session_state.example_index = 0
-                st.session_state.game_index = 0
-                st.session_state.example_correct = False
-                st.session_state.game_correct = False
-                st.session_state.example_hint = False
-                st.session_state.game_hint = False
-
-                st.rerun()
