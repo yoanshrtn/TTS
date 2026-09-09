@@ -1,58 +1,18 @@
+
 import streamlit as st
 import random
 
-# --- KONFIGURASI HALAMAN ---
+# --- KONFIGURASI HALAMAN & CSS ---
 st.set_page_config(page_title="TTS Alkitab Nyeleneh", page_icon="🧩", layout="centered")
 
-# --- CUSTOM CSS UNTUK TAMPILAN ---
+# Custom CSS agar input box mirip kotak TTS (teks di tengah, besar, dan tebal)
 st.markdown("""
     <style>
-    /* Desain Header Berwarna di Tengah */
-    .main-header {
-        background: linear-gradient(135deg, #FF4B4B 0%, #FF8F00 100%);
-        padding: 25px;
-        border-radius: 15px;
-        text-align: center;
-        color: white;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-    }
-    .main-header h1 {
-        color: white !important;
-        margin: 0;
-        padding: 0;
-        font-size: 38px;
-        font-weight: 900;
-    }
-    .main-header p {
-        margin: 5px 0 0 0;
-        font-size: 18px;
-        font-style: italic;
-        opacity: 0.9;
-    }
-    
-    /* Desain Input Kotak TTS (Satu Input tapi Renggang) */
     div[data-testid="stTextInput"] input {
-        text-align: center !important;
-        font-size: 36px !important;
-        font-weight: 900 !important;
-        letter-spacing: 30px !important; /* Membuat huruf saling berjauhan */
-        text-transform: uppercase !important;
-        background-color: #F8F9FA;
-        border: 3px solid #D1D5DB;
-        border-radius: 12px;
-        padding: 15px;
-        color: #1F2937;
-    }
-    
-    /* Desain Teks Hint */
-    .hint-text {
         text-align: center;
-        font-size: 32px;
-        letter-spacing: 30px;
+        font-size: 24px;
         font-weight: bold;
-        color: #FF4B4B;
-        margin-bottom: -15px;
+        text-transform: uppercase;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -74,11 +34,12 @@ questions = [
     {"q": "Untuk bisa masuk ke tanah Kanaan, bangsa Israel yang dipimpin Yosua berjalan menyeberangi sungai...", "normal": "YORDAN", "lontong": "KERING", "reason": "Kalau airnya lagi deres mana berani bawa anak-anak nyeberang. Nunggu air berhenti dan tanahnya kering baru nyeberang!"}
 ]
 
-# --- INISIALISASI STATE TERSIMPAN ---
+# --- INISIALISASI STATE (Agar bisa pindah soal tanpa kehilangan jawaban) ---
 if 'current_idx' not in st.session_state:
     st.session_state.current_idx = 0
 if 'user_answers' not in st.session_state:
-    st.session_state.user_answers = [""] * len(questions)
+    # Simpan jawaban tiap huruf untuk setiap soal (List of Lists)
+    st.session_state.user_answers = [["" for _ in range(len(q['lontong']))] for q in questions]
 if 'is_correct' not in st.session_state:
     st.session_state.is_correct = [False] * len(questions)
 if 'hint_shown' not in st.session_state:
@@ -92,74 +53,69 @@ def calculate_hint(normal, lontong):
         return matches[0]
     return random.randint(1, len(lontong) - 1) if len(lontong) > 1 else 0
 
-# --- HEADER UTAMA ---
-st.markdown("""
-<div class="main-header">
-    <h1>🧩 TTS Alkitab</h1>
-    <p>Gunakan Logika di Luar Nalar!</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Ambil data soal yang aktif
+# Ambil index aktif
 idx = st.session_state.current_idx
 q_data = questions[idx]
 ans_lontong = q_data['lontong'].upper()
 ans_normal = q_data['normal'].upper()
 
-# Navigasi Dropdown Soal
+# --- TAMPILAN UTAMA ---
+st.title("🧩 TTS Alkitab Nyeleneh")
+
+# Menu Dropdown untuk lompat ke soal tertentu
 selected_q = st.selectbox(
     "Pilih Daftar Soal:", 
     range(1, len(questions) + 1), 
     index=idx, 
     format_func=lambda x: f"Contoh Soal {x}" if x <= 2 else f"Soal Nomor {x-2}"
 )
+
+# Deteksi jika dropdown diganti
 if selected_q - 1 != idx:
     st.session_state.current_idx = selected_q - 1
     st.rerun()
 
+st.markdown("---")
 st.write(f"**Pertanyaan:** {q_data['q']}")
 
-# Hitung letak Hint jika belum ada
+# Hitung letak Hint (hanya 1 kali per soal)
 if st.session_state.hint_indices[idx] == -1:
     st.session_state.hint_indices[idx] = calculate_hint(ans_normal, ans_lontong)
 
-# Menampilkan Hint Teks (Muncul di atas kotak input jika hint diminta)
-hint_display = []
+# --- KOLOM KOTAK JAWABAN (SATU HURUF PER KOTAK) ---
+cols = st.columns(len(ans_lontong))
+
 for i in range(len(ans_lontong)):
-    if st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]:
-        hint_display.append(ans_lontong[i])
-    else:
-        hint_display.append("_")
+    with cols[i]:
+        # Jika peserta minta Hint, otomatis isi kotaknya dengan huruf yang benar
+        if st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]:
+            st.session_state.user_answers[idx][i] = ans_lontong[i]
+            
+        # Text input (max_chars=1) agar mirip TTS sungguhan
+        val = st.text_input(
+            label=f"box_{idx}_{i}",
+            value=st.session_state.user_answers[idx][i],
+            max_chars=1,
+            key=f"input_{idx}_{i}",
+            label_visibility="collapsed",
+            disabled=st.session_state.is_correct[idx] # Kunci kotak jika jawaban sudah benar
+        )
+        st.session_state.user_answers[idx][i] = val.upper()
 
-if st.session_state.hint_shown[idx]:
-    st.markdown(f"<div class='hint-text'>{''.join(hint_display)}</div>", unsafe_allow_html=True)
-else:
-    st.markdown(f"<div class='hint-text' style='color: transparent;'>{''.join(hint_display)}</div>", unsafe_allow_html=True)
+st.caption(f"*Jumlah kotak: {len(ans_lontong)} huruf*")
 
-# --- KOLOM INPUT JAWABAN TUNGGAL (AUTO NEXT & DELETE) ---
-# Menggunakan satu text_input tapi dimaksimalkan batas karakternya sesuai jawaban
-user_input = st.text_input(
-    label="Jawaban",
-    value=st.session_state.user_answers[idx],
-    max_chars=len(ans_lontong),
-    key=f"input_{idx}",
-    label_visibility="collapsed",
-    disabled=st.session_state.is_correct[idx]
-).upper()
-
-# Simpan progress ketikan ke memori
-st.session_state.user_answers[idx] = user_input
-
-st.caption(f"*Jumlah huruf: {len(ans_lontong)} | Ketik hurufnya bersambung, akan otomatis berjarak!*")
+# Gabungkan huruf dari kotak-kotak
+user_full_answer = "".join(st.session_state.user_answers[idx])
 
 # --- TOMBOL AKSI JAWAB & HINT ---
 col_btn1, col_btn2 = st.columns([1, 1])
+
 with col_btn1:
     if not st.session_state.is_correct[idx]:
         if st.button("Kunci Jawaban ✅", use_container_width=True):
-            if len(user_input) < len(ans_lontong):
-                st.warning(f"Isi semua {len(ans_lontong)} huruf dulu, ya!")
-            elif user_input == ans_lontong:
+            if len(user_full_answer) < len(ans_lontong):
+                st.warning("Isi semua kotak dulu, ya!")
+            elif user_full_answer == ans_lontong:
                 st.session_state.is_correct[idx] = True
                 st.rerun()
             else:
@@ -177,8 +133,9 @@ if st.session_state.is_correct[idx]:
     st.warning(f"**Alasan Logis:** {q_data['reason']}")
 
 st.write("")
+st.write("")
 
-# --- TOMBOL NAVIGASI BAWAH ---
+# --- TOMBOL NAVIGASI BAWAH (SEBELUMNYA / BERIKUTNYA) ---
 col_nav1, col_nav2 = st.columns(2)
 with col_nav1:
     if idx > 0:
