@@ -1,5 +1,5 @@
-
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 
 # --- KONFIGURASI HALAMAN ---
@@ -32,66 +32,125 @@ st.markdown("""
         opacity: 0.9;
     }
     
-    /* Desain Input Kotak TTS (Satu Input tapi Renggang) */
+    /* Desain Input Kotak TTS (Terpisah) */
     div[data-testid="stTextInput"] input {
         text-align: center !important;
-        font-size: 36px !important;
+        font-size: 28px !important;
         font-weight: 900 !important;
-        letter-spacing: 30px !important; /* Membuat huruf saling berjauhan */
         text-transform: uppercase !important;
         background-color: #F8F9FA;
-        border: 3px solid #D1D5DB;
-        border-radius: 12px;
-        padding: 15px;
+        border: 2px solid #D1D5DB;
+        border-radius: 8px;
+        padding: 10px !important;
         color: #1F2937;
     }
     
-    /* Desain Teks Hint */
-    .hint-text {
-        text-align: center;
-        font-size: 32px;
-        letter-spacing: 30px;
-        font-weight: bold;
-        color: #FF4B4B;
-        margin-bottom: -15px;
+    /* Menyembunyikan Label di atas kotak */
+    div[data-testid="stTextInput"] label {
+        display: none;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # --- DATA SOAL ---
 questions = [
-    {"q": "Karena tidak mau pergi ke Niniwe, Nabi Yunus akhirnya ditelan oleh ikan...", "normal": "BESAR", "lontong": "HIDUP", "reason": "Kalau ikannya udah mati, dia ngambang doang di laut, mana bisa buka mulut buat nelen orang."},
-    {"q": "Saat dikejar pasukan Firaun, dengan tongkatnya Nabi Musa membelah laut...", "normal": "MERAH", "lontong": "DALAM", "reason": "Justru karena lautnya dalam makanya harus dibelah biar bisa lewat. Kalau cetek tinggal nyeker aja."},
-    {"q": "Hukuman untuk Daniel karena tetap berdoa kepada Allah adalah dilempar ke dalam gua...", "normal": "SINGA", "lontong": "GELAP", "reason": "Gua zaman dulu ditutup batu atasnya, ya pasti gelap gulita. Kalau terang banyak lampu itu minimarket."},
-    {"q": "Simson akhirnya kehilangan semua kekuatannya setelah rambutnya di...", "normal": "POTONG", "lontong": "PENDEK", "reason": "Setelah dicukur ya rambutnya jadi pendek. Coba kalau potong ujungnya doang dikit, kekuatannya nggak hilang."},
-    {"q": "Karena badannya pendek, Zakheus memanjat pohon ara supaya bisa melihat...", "normal": "YESUS", "lontong": "JELAS", "reason": "Kalau lihat dari bawah ketutupan kepala orang, buram! Makanya manjat supaya bisa melihat dengan jelas."},
-    {"q": "Saat berjalan di atas air menuju Yesus lalu melihat tiupan angin sakal, Petrus menjadi...", "normal": "TAKUT", "lontong": "BASAH", "reason": "Karena mulai tenggelam ke dalam air, ya otomatis baju sampai sepatunya basah kuyup!"},
-    {"q": "Tindakan Yudas Iskariot rela menyerahkan Yesus kepada imam-imam kepala demi mendapatkan 30 keping...", "normal": "PERAK", "lontong": "SALAH", "reason": "Ya jelas tindakannya salah! Masa mengkhianati Guru sendiri cuma demi materi."},
-    {"q": "Meskipun diuji dengan kehilangan seluruh hartanya dan anak-anaknya meninggal, Ayub tetap...", "normal": "SETIA", "lontong": "HIDUP", "reason": "Yang mati anak dan ternaknya. Ayubnya sendiri kan saat itu masih hidup."},
-    {"q": "Esau rela menjual hak kesulungannya kepada Yakub hanya demi semangkuk sayur kacang...", "normal": "MERAH", "lontong": "PANAS", "reason": "Kuahnya pasti masih panas dan ngebul. Kalau udah dingin dari kemarin, Esau juga mikir dua kali."},
-    {"q": "Nabi Elia sendirian menantang 450 nabi palsu dewa Baal di atas Gunung...", "normal": "KARMEL", "lontong": "BERANI", "reason": "Satu lawan empat ratus lima puluh orang, ya jelas Elia itu berani! Kalau penakut mending ngumpet."},
-    {"q": "Sebelum merayakan Paskah, Yesus memberi teladan kerendahan hati dengan membasuh kaki...", "normal": "MURID", "lontong": "KOTOR", "reason": "Zaman dulu jalanan berdebu dan cuma pakai sandal, kakinya pasti kotor. Kalau bersih ngapain dibasuh lagi."},
-    {"q": "Martir pertama di gereja mula-mula yang mati syahid karena dilempari batu bertubi-tubi oleh orang Yahudi...", "normal": "STEFANUS", "lontong": "BERDARAH", "reason": "Dilempar batu sekepalan tangan beramai-ramai, ya pasti badannya berdarah semua."},
-    {"q": "Untuk bisa masuk ke tanah Kanaan, bangsa Israel yang dipimpin Yosua berjalan menyeberangi sungai...", "normal": "YORDAN", "lontong": "KERING", "reason": "Kalau airnya lagi deres mana berani bawa anak-anak nyeberang. Nunggu air berhenti dan tanahnya kering baru nyeberang!"}
+    {"q": "Karena tidak mau pergi ke Niniwe, Nabi Yunus akhirnya ditelan oleh ikan...", "normal": "BESAR", "lontong": "HIDUP"},
+    {"q": "Saat dikejar pasukan Firaun, dengan tongkatnya Nabi Musa membelah laut...", "normal": "MERAH", "lontong": "DALAM"},
+    {"q": "Hukuman untuk Daniel karena tetap berdoa kepada Allah adalah dilempar ke dalam gua...", "normal": "SINGA", "lontong": "GELAP"},
+    {"q": "Simson akhirnya kehilangan semua kekuatannya setelah rambutnya di...", "normal": "POTONG", "lontong": "PENDEK"},
+    {"q": "Karena badannya pendek, Zakheus memanjat pohon ara supaya bisa melihat...", "normal": "YESUS", "lontong": "JELAS"},
+    {"q": "Saat berjalan di atas air menuju Yesus lalu melihat tiupan angin sakal, Petrus menjadi...", "normal": "TAKUT", "lontong": "BASAH"},
+    {"q": "Tindakan Yudas Iskariot rela menyerahkan Yesus kepada imam-imam kepala demi mendapatkan 30 keping...", "normal": "PERAK", "lontong": "SALAH"},
+    {"q": "Meskipun diuji dengan kehilangan seluruh hartanya dan anak-anaknya meninggal, Ayub tetap...", "normal": "SETIA", "lontong": "HIDUP"},
+    {"q": "Esau rela menjual hak kesulungannya kepada Yakub hanya demi semangkuk sayur kacang...", "normal": "MERAH", "lontong": "PANAS"},
+    {"q": "Nabi Elia sendirian menantang 450 nabi palsu dewa Baal di atas Gunung...", "normal": "KARMEL", "lontong": "BERANI"},
+    {"q": "Sebelum merayakan Paskah, Yesus memberi teladan kerendahan hati dengan membasuh kaki...", "normal": "MURID", "lontong": "KOTOR"},
+    {"q": "Martir pertama di gereja mula-mula yang mati syahid karena dilempari batu bertubi-tubi oleh orang Yahudi...", "normal": "STEFANUS", "lontong": "BERDARAH"},
+    {"q": "Untuk bisa masuk ke tanah Kanaan, bangsa Israel yang dipimpin Yosua berjalan menyeberangi sungai...", "normal": "YORDAN", "lontong": "KERING"}
 ]
 
 # --- INISIALISASI STATE TERSIMPAN ---
 if 'current_idx' not in st.session_state:
     st.session_state.current_idx = 0
-if 'user_answers' not in st.session_state:
-    st.session_state.user_answers = [""] * len(questions)
 if 'is_correct' not in st.session_state:
     st.session_state.is_correct = [False] * len(questions)
 if 'hint_shown' not in st.session_state:
     st.session_state.hint_shown = [False] * len(questions)
 if 'hint_indices' not in st.session_state:
     st.session_state.hint_indices = [-1] * len(questions)
+if 'error_msg' not in st.session_state:
+    st.session_state.error_msg = ""
+if 'warning_msg' not in st.session_state:
+    st.session_state.warning_msg = ""
 
 def calculate_hint(normal, lontong):
     matches = [i for i in range(len(lontong)) if i < len(normal) and normal[i] == lontong[i]]
     if matches:
         return matches[0]
     return random.randint(1, len(lontong) - 1) if len(lontong) > 1 else 0
+
+# Set up state input kotak untuk semua soal
+for i, q in enumerate(questions):
+    ans_lontong = q['lontong'].upper()
+    if st.session_state.hint_indices[i] == -1:
+        st.session_state.hint_indices[i] = calculate_hint(q['normal'].upper(), ans_lontong)
+    for j in range(len(ans_lontong)):
+        key = f"box_{i}_{j}"
+        if key not in st.session_state:
+            st.session_state[key] = ""
+
+# --- FUNGSI CALLBACKS ---
+def change_question():
+    st.session_state.current_idx = st.session_state.selectbox_idx - 1
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+
+def check_answer():
+    idx = st.session_state.current_idx
+    ans_lontong = questions[idx]['lontong'].upper()
+    
+    # Gabungkan jawaban dari kotak-kotak
+    user_ans = "".join([st.session_state[f"box_{idx}_{i}"].upper() for i in range(len(ans_lontong))])
+    
+    if len(user_ans) < len(ans_lontong):
+        st.session_state.warning_msg = f"Isi semua {len(ans_lontong)} huruf dulu, ya!"
+        st.session_state.error_msg = ""
+    elif user_ans == ans_lontong:
+        st.session_state.is_correct[idx] = True
+        st.session_state.error_msg = ""
+        st.session_state.warning_msg = ""
+    else:
+        st.session_state.error_msg = "Tetooot! ❌ Salah! Coba pakai logika Cak Lontong."
+        st.session_state.warning_msg = ""
+        # Bersihkan semua kotak kecuali hint
+        for i in range(len(ans_lontong)):
+            if not (st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]):
+                st.session_state[f"box_{idx}_{i}"] = ""
+
+def get_hint():
+    idx = st.session_state.current_idx
+    ans_lontong = questions[idx]['lontong'].upper()
+    st.session_state.hint_shown[idx] = True
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+    
+    # Bersihkan kotak lain, isi kotak hint
+    for i in range(len(ans_lontong)):
+        if i == st.session_state.hint_indices[idx]:
+            st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
+        else:
+            st.session_state[f"box_{idx}_{i}"] = ""
+
+def go_prev():
+    st.session_state.current_idx -= 1
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+
+def go_next():
+    st.session_state.current_idx += 1
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+
 
 # --- HEADER UTAMA ---
 st.markdown("""
@@ -101,81 +160,98 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Ambil data soal yang aktif
 idx = st.session_state.current_idx
 q_data = questions[idx]
 ans_lontong = q_data['lontong'].upper()
-ans_normal = q_data['normal'].upper()
 
 # Navigasi Dropdown Soal
-selected_q = st.selectbox(
+st.selectbox(
     "Pilih Daftar Soal:", 
     range(1, len(questions) + 1), 
     index=idx, 
-    format_func=lambda x: f"Contoh Soal {x}" if x <= 2 else f"Soal Nomor {x-2}"
+    format_func=lambda x: f"Contoh Soal {x}" if x <= 2 else f"Soal Nomor {x-2}",
+    key="selectbox_idx",
+    on_change=change_question
 )
-if selected_q - 1 != idx:
-    st.session_state.current_idx = selected_q - 1
-    st.rerun()
 
 st.write(f"**Pertanyaan:** {q_data['q']}")
 
-# Hitung letak Hint jika belum ada
-if st.session_state.hint_indices[idx] == -1:
-    st.session_state.hint_indices[idx] = calculate_hint(ans_normal, ans_lontong)
+# --- KOLOM KOTAK JAWABAN MISAH ---
+cols = st.columns(len(ans_lontong))
 
-# Menampilkan Hint Teks (Muncul di atas kotak input jika hint diminta)
-hint_display = []
 for i in range(len(ans_lontong)):
-    if st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]:
-        hint_display.append(ans_lontong[i])
-    else:
-        hint_display.append("_")
+    with cols[i]:
+        # Kunci kotak jika jawaban sudah benar ATAU jika ini kotak hint yang sedang kebuka
+        is_hint = st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]
+        is_disabled = st.session_state.is_correct[idx] or is_hint
+        
+        st.text_input(
+            label=f"hidden_{idx}_{i}",
+            max_chars=1,
+            key=f"box_{idx}_{i}",
+            disabled=is_disabled
+        )
 
-if st.session_state.hint_shown[idx]:
-    st.markdown(f"<div class='hint-text'>{''.join(hint_display)}</div>", unsafe_allow_html=True)
-else:
-    st.markdown(f"<div class='hint-text' style='color: transparent;'>{''.join(hint_display)}</div>", unsafe_allow_html=True)
+st.caption(f"*Jumlah kotak: {len(ans_lontong)} huruf*")
 
-# --- KOLOM INPUT JAWABAN TUNGGAL (AUTO NEXT & DELETE) ---
-# Menggunakan satu text_input tapi dimaksimalkan batas karakternya sesuai jawaban
-user_input = st.text_input(
-    label="Jawaban",
-    value=st.session_state.user_answers[idx],
-    max_chars=len(ans_lontong),
-    key=f"input_{idx}",
-    label_visibility="collapsed",
-    disabled=st.session_state.is_correct[idx]
-).upper()
+# --- INJEKSI JAVASCRIPT UNTUK AUTO-FOCUS (Ketik nyambung) ---
+js_code = """
+<script>
+const doc = window.parent.document;
+const inputs = doc.querySelectorAll('div[data-testid="stTextInput"] input');
 
-# Simpan progress ketikan ke memori
-st.session_state.user_answers[idx] = user_input
+inputs.forEach((input, index) => {
+    if (!input.dataset.autofocusAttached) {
+        input.dataset.autofocusAttached = "true";
+        
+        // Ketik pindah ke kanan
+        input.addEventListener('input', function(e) {
+            if (this.value.length === 1 && index < inputs.length - 1) {
+                let next_input = inputs[index + 1];
+                // Loncati kotak kalau disable (misal kena hint)
+                if(next_input && next_input.disabled && index + 2 < inputs.length) {
+                    inputs[index + 2].focus();
+                } else if (next_input && !next_input.disabled) {
+                    next_input.focus();
+                }
+            }
+        });
+        
+        // Hapus pindah ke kiri
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                let prev_input = inputs[index - 1];
+                if(prev_input && prev_input.disabled && index - 2 >= 0) {
+                     inputs[index - 2].focus();
+                } else if (prev_input && !prev_input.disabled) {
+                     prev_input.focus();
+                }
+            }
+        });
+    }
+});
+</script>
+"""
+components.html(js_code, height=0)
 
-st.caption(f"*Jumlah huruf: {len(ans_lontong)} | Ketik hurufnya bersambung, akan otomatis berjarak!*")
 
 # --- TOMBOL AKSI JAWAB & HINT ---
 col_btn1, col_btn2 = st.columns([1, 1])
 with col_btn1:
     if not st.session_state.is_correct[idx]:
-        if st.button("Kunci Jawaban ✅", use_container_width=True):
-            if len(user_input) < len(ans_lontong):
-                st.warning(f"Isi semua {len(ans_lontong)} huruf dulu, ya!")
-            elif user_input == ans_lontong:
-                st.session_state.is_correct[idx] = True
-                st.rerun()
-            else:
-                st.error("Tetooot! ❌ Salah! Coba pakai logika Cak Lontong.")
+        st.button("Kunci Jawaban ✅", use_container_width=True, on_click=check_answer)
 
 with col_btn2:
     if not st.session_state.is_correct[idx] and not st.session_state.hint_shown[idx]:
-        if st.button("Minta Hint 💡", use_container_width=True):
-            st.session_state.hint_shown[idx] = True
-            st.rerun()
+        st.button("Minta Hint 💡", use_container_width=True, on_click=get_hint)
 
-# --- ALERT JIKA BENAR ---
+# --- ALERT MESSAGE ---
 if st.session_state.is_correct[idx]:
     st.success("BENAR! 🎉")
-    st.warning(f"**Alasan Logis:** {q_data['reason']}")
+if st.session_state.error_msg:
+    st.error(st.session_state.error_msg)
+if st.session_state.warning_msg:
+    st.warning(st.session_state.warning_msg)
 
 st.write("")
 
@@ -183,11 +259,7 @@ st.write("")
 col_nav1, col_nav2 = st.columns(2)
 with col_nav1:
     if idx > 0:
-        if st.button("⬅️ Soal Sebelumnya", use_container_width=True):
-            st.session_state.current_idx -= 1
-            st.rerun()
+        st.button("⬅️ Soal Sebelumnya", use_container_width=True, on_click=go_prev)
 with col_nav2:
     if idx < len(questions) - 1:
-        if st.button("Soal Berikutnya ➡️", use_container_width=True):
-            st.session_state.current_idx += 1
-            st.rerun()
+        st.button("Soal Berikutnya ➡️", use_container_width=True, on_click=go_next)
