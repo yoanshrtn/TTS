@@ -49,7 +49,7 @@ st.markdown("""
     /* Input disabled (Saat jawaban benar/hint/lihat jawaban) */
     div[data-testid="stTextInput"] input:disabled {
         background-color: #E5E7EB;
-        color: #047857; /* Warna hijau tua biar kelihatan kalau bener */
+        color: #047857; /* Warna hijau tua */
         border: 2px solid #34D399;
     }
     
@@ -82,6 +82,8 @@ if 'current_idx' not in st.session_state:
     st.session_state.current_idx = 0
 if 'is_correct' not in st.session_state:
     st.session_state.is_correct = [False] * len(questions)
+if 'is_revealed' not in st.session_state:
+    st.session_state.is_revealed = [False] * len(questions)
 if 'hint_shown' not in st.session_state:
     st.session_state.hint_shown = [False] * len(questions)
 if 'hint_indices' not in st.session_state:
@@ -153,10 +155,10 @@ def reveal_answer():
     idx = st.session_state.current_idx
     ans_lontong = questions[idx]['lontong'].upper()
     
-    # Isi semua kotak dengan jawaban benar & ubah status jadi correct
+    # Isi semua kotak dengan jawaban benar & ubah status jadi REVEALED (bukan correct)
     for i in range(len(ans_lontong)):
         st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
-    st.session_state.is_correct[idx] = True
+    st.session_state.is_revealed[idx] = True
     st.session_state.error_msg = ""
     st.session_state.warning_msg = ""
 
@@ -183,8 +185,8 @@ idx = st.session_state.current_idx
 q_data = questions[idx]
 ans_lontong = q_data['lontong'].upper()
 
-# --- PASTIKAN KOTAK TETAP TERISI JIKA SOAL SUDAH PERNAH DIJAWAB BENAR ---
-if st.session_state.is_correct[idx]:
+# --- PASTIKAN KOTAK TETAP TERISI JIKA SOAL SUDAH DIJAWAB BENAR / DIBUKA JAWABANNYA ---
+if st.session_state.is_correct[idx] or st.session_state.is_revealed[idx]:
     for i in range(len(ans_lontong)):
         st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
 
@@ -205,9 +207,9 @@ cols = st.columns(len(ans_lontong))
 
 for i in range(len(ans_lontong)):
     with cols[i]:
-        # Kunci kotak jika jawaban sudah benar ATAU jika ini kotak hint yang sedang kebuka
+        # Kunci kotak jika jawaban sudah benar, jawaban sudah di-reveal, ATAU ini kotak hint
         is_hint = st.session_state.hint_shown[idx] and i == st.session_state.hint_indices[idx]
-        is_disabled = st.session_state.is_correct[idx] or is_hint
+        is_disabled = st.session_state.is_correct[idx] or st.session_state.is_revealed[idx] or is_hint
         
         st.text_input(
             label=f"hidden_{idx}_{i}",
@@ -260,7 +262,7 @@ components.html(js_code, height=0)
 
 
 # --- TOMBOL AKSI JAWAB, HINT, & LIHAT JAWABAN ---
-if not st.session_state.is_correct[idx]:
+if not (st.session_state.is_correct[idx] or st.session_state.is_revealed[idx]):
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     
     with col_btn1:
@@ -277,6 +279,9 @@ if not st.session_state.is_correct[idx]:
 # --- ALERT MESSAGE ---
 if st.session_state.is_correct[idx]:
     st.success("BENAR! 🎉 (Teka-Teki Terjawab)")
+elif st.session_state.is_revealed[idx]:
+    st.info("Kamu menyerah, jawaban telah ditampilkan. 🏳️")
+    
 if st.session_state.error_msg:
     st.error(st.session_state.error_msg)
 if st.session_state.warning_msg:
