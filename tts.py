@@ -1,3 +1,4 @@
+
 import streamlit as st
 import streamlit.components.v1 as components
 import random
@@ -43,6 +44,13 @@ st.markdown("""
         border-radius: 8px;
         padding: 10px !important;
         color: #1F2937;
+    }
+    
+    /* Input disabled (Saat jawaban benar/hint/lihat jawaban) */
+    div[data-testid="stTextInput"] input:disabled {
+        background-color: #E5E7EB;
+        color: #047857; /* Warna hijau tua biar kelihatan kalau bener */
+        border: 2px solid #34D399;
     }
     
     /* Menyembunyikan Label di atas kotak */
@@ -141,6 +149,17 @@ def get_hint():
         else:
             st.session_state[f"box_{idx}_{i}"] = ""
 
+def reveal_answer():
+    idx = st.session_state.current_idx
+    ans_lontong = questions[idx]['lontong'].upper()
+    
+    # Isi semua kotak dengan jawaban benar & ubah status jadi correct
+    for i in range(len(ans_lontong)):
+        st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
+    st.session_state.is_correct[idx] = True
+    st.session_state.error_msg = ""
+    st.session_state.warning_msg = ""
+
 def go_prev():
     st.session_state.current_idx -= 1
     st.session_state.error_msg = ""
@@ -163,6 +182,11 @@ st.markdown("""
 idx = st.session_state.current_idx
 q_data = questions[idx]
 ans_lontong = q_data['lontong'].upper()
+
+# --- PASTIKAN KOTAK TETAP TERISI JIKA SOAL SUDAH PERNAH DIJAWAB BENAR ---
+if st.session_state.is_correct[idx]:
+    for i in range(len(ans_lontong)):
+        st.session_state[f"box_{idx}_{i}"] = ans_lontong[i]
 
 # Navigasi Dropdown Soal
 st.selectbox(
@@ -235,19 +259,24 @@ inputs.forEach((input, index) => {
 components.html(js_code, height=0)
 
 
-# --- TOMBOL AKSI JAWAB & HINT ---
-col_btn1, col_btn2 = st.columns([1, 1])
-with col_btn1:
-    if not st.session_state.is_correct[idx]:
-        st.button("Kunci Jawaban ✅", use_container_width=True, on_click=check_answer)
+# --- TOMBOL AKSI JAWAB, HINT, & LIHAT JAWABAN ---
+if not st.session_state.is_correct[idx]:
+    col_btn1, col_btn2, col_btn3 = st.columns(3)
+    
+    with col_btn1:
+        st.button("Cek Jawaban ✅", use_container_width=True, on_click=check_answer)
+        
+    with col_btn2:
+        if not st.session_state.hint_shown[idx]:
+            st.button("Minta Hint 💡", use_container_width=True, on_click=get_hint)
+            
+    with col_btn3:
+        st.button("Lihat Jawaban 🏳️", use_container_width=True, on_click=reveal_answer)
 
-with col_btn2:
-    if not st.session_state.is_correct[idx] and not st.session_state.hint_shown[idx]:
-        st.button("Minta Hint 💡", use_container_width=True, on_click=get_hint)
 
 # --- ALERT MESSAGE ---
 if st.session_state.is_correct[idx]:
-    st.success("BENAR! 🎉")
+    st.success("BENAR! 🎉 (Teka-Teki Terjawab)")
 if st.session_state.error_msg:
     st.error(st.session_state.error_msg)
 if st.session_state.warning_msg:
